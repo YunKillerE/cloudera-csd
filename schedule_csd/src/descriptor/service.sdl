@@ -1,0 +1,64 @@
+{
+  "name" : "SCHEDULE",
+  "label" : "Schedule",
+  "description" : "The Schedule service",
+  "version" : "5.12.0",
+  "runAs" : {
+    "user" : "bigf_admin",
+    "group" : "bigf_super"
+   },
+   "compatibility" : {
+     "generation" : 1
+   },
+  "icon" : "images/sch.png",
+  "serviceDependencies" : [
+    {"name" : "ZOOKEEPER", "required" : "true" },
+    {"name" : "HDFS", "required" : "true"}
+  ],
+  "roles" : [
+    {
+       "name" : "SCHEDULE_NODE",
+       "label" : "SCHEDULE Server",
+       "pluralLabel" : "SCHEDULE Servers",
+      "topology" : { "minInstances" : 1, "maxInstances" : 5, "softMinInstances" : 2, "softMaxInstances" : 3},
+       "jvmBased": true,
+       "parameters" : [
+                 {
+                   "name" : "schedule_home",
+                   "label" : "schedule Home",
+                   "description" : "schedule Home",
+                   "required" : "true",
+                   "type" : "string",
+                   "default" : "/bigf/admin/schedule/schedule"
+                 }
+       ],
+       "startRunner" : {
+         "program" : "scripts/control.sh",
+         "args" : [
+            "start"
+         ],
+         "environmentVariables" : {
+           "HOST": "${host}",
+           "SCHEDULE_HOME" : "${schedule_home}"
+         }
+       },
+       "stopRunner": {
+         "timeout": "30000"
+       }
+       }
+      ],
+              "rollingRestart": {
+                "nonWorkerSteps": [
+                  {
+                    "roleName": "OUTBOX_NODE",
+                    "bringUpCommands": [ "Start" ],
+                    "bringDownCommands": [ "Stop" ]
+                  },
+                  {
+                    "roleName": "PORTAL_NODE",
+                    "bringUpCommands": [ "Start" ],
+                    "bringDownCommands": [ "Stop" ]
+                  }
+                ]
+              }
+    }

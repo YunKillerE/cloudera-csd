@@ -1,0 +1,143 @@
+{
+  "name" : "FLINK",
+  "label" : "Flink",
+  "description" : "The flink service",
+  "version" : "5.12.0",
+  "runAs" : {
+    "user" : "bigf_admin",
+    "group" : "bigf_admin"
+   },
+   "compatibility" : {
+     "generation" : 1
+   },
+  "icon" : "images/flink.png",
+  "serviceDependencies" : [
+    {"name" : "ZOOKEEPER", "required" : "true" },
+    {"name" : "HDFS", "required" : "true"}
+  ],
+  "hdfsDirs" : [
+    {
+      "name" : "CreateSparkUserDirCommand",
+      "label" : "Create Spark User Dir",
+      "description" : "Creates the Spark user directory in HDFS.",
+      "directoryDescription" : "Spark HDFS user directory",
+      "path" : "/testHdfsDir",
+      "permissions" : "0751"
+    }
+  ],
+  "commands" : [
+    {
+      "name" : "ClearHaDirectoryOnHdfs",
+      "label" : "Clear Ha Directory On Hdfs for Flink Cluster",
+      "description" : "Clear Ha Directory On Hdfs for Flink Cluster",
+      "roleName" : "FLINK_JOBMANAGER",
+      "roleCommand" : "clear_ha_directory_cmd",
+      "runMode" : "single"
+    }
+  ],
+  "serviceInit" : {
+    "preStartSteps" : [
+      {
+        "commandName" : "ClearHaDirectoryOnHdfs"
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name" : "java_home",
+      "label" : "Java Home",
+      "description" : "Java Home",
+      "required" : "true",
+      "type" : "string",
+      "default" : "/usr/java/latest"
+    },
+    {
+      "name" : "ignite_home",
+      "label" : "Ignite Home",
+      "description" : "Path to IGNITE_HOME",
+      "type" : "string",
+      "default" : "/bigf/admin/ignite/ignite/"
+    },
+    {
+      "name" : "flink_config",
+      "label" : "Flink Conig File",
+      "description" : "Flink Config File",
+      "required" : "true",
+      "type" : "string",
+      "default" : "/bigf/admin/flink/flink/conf/flink-conf.yaml"
+    },
+    {
+      "name" : "flink_home",
+      "label" : "Flink Home",
+      "description" : "Flink Home",
+      "required" : "true",
+      "type" : "string",
+      "default" : "/bigf/admin/flink/flink"
+    }
+  ],
+  "rolesWithExternalLinks" : ["FLINK_JOBMANAGER"],
+  "roles" : [
+  {
+    "name" : "FLINK_JOBMANAGER",
+    "label" : "JobManager",
+    "pluralLabel" : "JobManagers",
+      "topology" : { "minInstances" : 1, "maxInstances" : 5},
+    "jvmBased": true,
+    "startRunner" : {
+      "program" : "scripts/control.sh",
+      "args" : [ "jobmanager-start" ],
+      "environmentVariables" : {
+        "JAVA_HOME" : "${java_home}",
+        "IGNITE_HOME" : "${ignite_home}",
+        "FLINK_HOME": "${flink_home}",
+        "FLINK_CONFIG": "${flink_config}"
+      }
+    },
+      "externalLink" : {
+        "name" : "master_web_ui",
+        "label" : "Master Web UI",
+        "url" : "http://${host}:${master_webui_port}"
+      },
+        "parameters" : [
+        {
+          "name" : "master_webui_port",
+          "label" : "Master WebUI Port",
+          "description" : "The port of the master WebUI",
+          "configName" : "webui.port",
+          "required" : "true",
+          "type" : "port",
+          "default" : 8081
+        }
+        ],
+       "commands" : [
+         {
+           "name" : "clear_ha_directory_cmd",
+           "label" : "Clear Ha Directory for Flink Cluster",
+           "description" : "Clear Ha Directory for Flink Cluster",
+           "expectedExitCodes" : [0],
+           "requiredRoleState" : "stopped",
+           "commandRunner" : {
+             "program" : "scripts/clearHa.sh"
+           }
+         }
+        ]
+   },
+   {
+     "name" : "FLINK_TASKMANAGER",
+     "label" : "TaskManager",
+     "pluralLabel" : "TaskManagers",
+     "jvmBased": true,
+     "topology" : { "minInstances" : 1 },
+     "startRunner" : {
+        "program" : "scripts/control.sh",
+        "args" : [ "taskmanager-start" ],
+        "environmentVariables" : {
+          "JAVA_HOME" : "${java_home}",
+          "IGNITE_HOME" : "${ignite_home}",
+          "FLINK_HOME": "${flink_home}",
+          "FLINK_CONFIG": "${flink_config}"
+        }
+      }
+    }
+  ]
+}

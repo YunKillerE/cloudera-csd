@@ -1,0 +1,115 @@
+{
+  "name" : "TOMCAT",
+  "label" : "Tomcat",
+  "description" : "The Tomcat service for Outbox and Portal",
+  "version" : "5.12.0",
+  "runAs" : {
+    "user" : "bigf_app",
+    "group" : "bigf_user"
+   },
+   "compatibility" : {
+     "generation" : 1
+   },
+  "icon" : "images/out.png",
+  "serviceDependencies" : [
+    {"name" : "ZOOKEEPER", "required" : "true" },
+    {"name" : "HDFS", "required" : "true"}
+  ],
+  "roles" : [
+    {
+       "name" : "OUTBOX_NODE",
+       "label" : "OUTBOX Server",
+       "pluralLabel" : "OUTBOX Servers",
+      "topology" : { "minInstances" : 1, "maxInstances" : 5, "softMinInstances" : 2, "softMaxInstances" : 3},
+       "jvmBased": true,
+       "parameters" : [
+                 {
+                   "name" : "outbox_home",
+                   "label" : "outbox Home",
+                   "description" : "outbox Home",
+                   "required" : "true",
+                   "type" : "string",
+                   "default" : "/bigf/app/tomcat/outbox_tomcat"
+                 },
+                 {
+                             "name" : "java_home",
+                             "label" : "Java Home",
+                             "description" : "Java Home",
+                             "required" : "true",
+                             "type" : "string",
+                             "default" : "/usr/java/latest"
+                 }
+
+       ],
+       "startRunner" : {
+         "program" : "scripts/control.sh",
+         "args" : [
+            "start"
+         ],
+         "environmentVariables" : {
+           "HOST": "${host}",
+           "TOMCAT_HOME" : "${outbox_home}",
+           "JAVA_HOME" : "${java_home}"
+         }
+       },
+       "stopRunner": {
+         "timeout": "30000"
+       }
+       },
+       {
+                     "name" : "PORTAL_NODE",
+                     "label" : "Portal Server",
+                     "pluralLabel" : "Portal Servers",
+      "topology" : { "minInstances" : 1, "maxInstances" : 5, "softMinInstances" : 2, "softMaxInstances" : 3},
+                     "jvmBased": true,
+                     "parameters" : [
+                               {
+                                 "name" : "portal_home",
+                                 "label" : "Portal Home",
+                                 "description" : "Portal Home",
+                                 "required" : "true",
+                                 "type" : "string",
+                                 "default" : "/bigf/app/tomcat/portal_tomcat"
+                               },
+                               {
+                                           "name" : "java_home",
+                                           "label" : "Java Home",
+                                           "description" : "Java Home",
+                                           "required" : "true",
+                                           "type" : "string",
+                                           "default" : "/usr/java/latest"
+                               }
+
+                     ],
+                     "startRunner" : {
+                       "program" : "scripts/control.sh",
+                       "args" : [
+                          "start"
+                       ],
+                       "environmentVariables" : {
+                         "HOST": "${host}",
+                         "TOMCAT_HOME" : "${portal_home}",
+                         "JAVA_HOME" : "${java_home}"
+                       }
+                     },
+                     "stopRunner": {
+                       "timeout": "30000"
+                     }
+                     }
+
+      ],
+        "rollingRestart": {
+          "nonWorkerSteps": [
+            {
+              "roleName": "OUTBOX_NODE",
+              "bringUpCommands": [ "Start" ],
+              "bringDownCommands": [ "Stop" ]
+            },
+            {
+              "roleName": "PORTAL_NODE",
+              "bringUpCommands": [ "Start" ],
+              "bringDownCommands": [ "Stop" ]
+            }
+          ]
+        }
+    }

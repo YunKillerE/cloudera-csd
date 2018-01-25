@@ -1,0 +1,238 @@
+{
+  "name" : "IGNITE",
+  "label" : "Ignite",
+  "description" : "The Apache Ignite service",
+  "version" : "5.12.0",
+  "runAs" : {
+    "user" : "bigf_admin",
+    "group" : "bigf_super"
+   },
+   "compatibility" : {
+     "generation" : 2,
+     "cdhVersion" : {
+       "min" : 5,
+       "max" : 5
+     }
+   },
+  "icon" : "images/icon.png",
+  "serviceDependencies": [
+    {
+      "name": "ZOOKEEPER",
+      "required": "true"
+    }
+  ],
+  "parameters" : [
+    {
+      "name" : "service_var1",
+      "label" : "Service Var1 Label",
+      "description" : "Service Var1 Description",
+      "configName" : "service.var1.config",
+      "type" : "string",
+      "default" : "this is a default"
+    },
+    {
+      "name" : "service_var2",
+      "label" : "Service Var2 Label",
+      "description" : "Service Var2 Description",
+      "required" : "true",
+      "type" : "long",
+      "default" : 20 ,
+      "min" : 2
+    }
+  ],
+  "hdfsDirs" : [
+     {
+       "name" : "CreateHomeDirCommand",
+       "label" : "Create Echo Home Dir",
+       "description" : "Create the home directory in HDFS for echo service",
+       "directoryDescription" : "Home directory used by Echo service",
+       "path" : "/echo",
+       "permissions" : "0700"
+     }
+  ],
+  "commands" : [
+    {
+      "name" : "QueryActivateIgnite",
+      "label" : "Query Activate/Deactivate for Ignite Cluster",
+      "description" : "Do Activate Ignite Cluster on ANY One of Server Node",
+      "roleName" : "IGNITE_NODE",
+      "roleCommand" : "query_activate_cmd",
+      "runMode" : "single"
+    },
+    {
+      "name" : "ActivateIgnite",
+      "label" : "Activate Ignite Cluster",
+      "description" : "Do Activate Ignite Cluster on ANY One of Server Node",
+      "roleName" : "IGNITE_NODE",
+      "roleCommand" : "ignite_activate_cmd",
+      "runMode" : "single"
+    },
+    {
+      "name" : "DeactivateIgnite",
+      "label" : "Deactivate Ignite Cluster",
+      "description" : "Do Deactivate Ignite Cluster on ANY One of Server Node",
+      "roleName" : "IGNITE_NODE",
+      "roleCommand" : "ignite_deactivate_cmd",
+      "runMode" : "single"
+    }
+  ],
+  "roles" : [
+    {
+       "name" : "IGNITE_NODE",
+       "label" : "Ignite Node Server",
+       "pluralLabel" : "Ignite Node Servers",
+       "jvmBased": true,
+       "startRunner" : {
+         "program" : "scripts/control.sh",
+         "args" : [
+            "start"
+         ],
+         "environmentVariables" : {
+           "HOST": "${host}",
+           "IGNITE_HOME" : "${ignite_home}",
+           "IGNITE_CONFIG" : "${ignite_config}",
+           "IGNITE_JVM_OPTS" : "${ignite_jvm_opts}",
+           "IGNITE_JMX_PORT" : "${ignite_jmx_port}"
+         }
+       },
+       "stopRunner": {
+         "timeout": "30000"
+       },
+       "commands" : [
+         {
+           "name" : "query_activate_cmd",
+           "label" : "Query Activate/Deactivate for Ignite Cluster",
+           "description" : "Query Activate/Deactivate Ignite Cluster",
+           "expectedExitCodes" : [0],
+           "requiredRoleState" : "running",
+           "commandRunner" : {
+             "program" : "scripts/ignite_activate.sh",
+             "args" : ["query"]
+           }
+         },
+         {
+           "name" : "ignite_activate_cmd",
+           "label" : "Activate Ignite Cluster",
+           "description" : "Do Activate Ignite Cluster",
+           "expectedExitCodes" : [0],
+           "requiredRoleState" : "running",
+           "commandRunner" : {
+             "program" : "scripts/ignite_activate.sh",
+             "args" : ["activate"]
+           }
+         },
+         {
+           "name" : "ignite_deactivate_cmd",
+           "label" : "Deactivate Ignite Cluster",
+           "description" : "Do Deactivate Ignite Cluster",
+           "expectedExitCodes" : [0],
+           "requiredRoleState" : "running",
+           "commandRunner" : {
+             "program" : "scripts/ignite_activate.sh",
+             "args" : ["deactivate"]
+           }
+         }
+       ],
+       "logging" : {
+         "dir" : "/bigf/log/ignite/",
+         "filename" : "ignite.log",
+         "configName" : "log.dir",
+         "loggingType" : "other"
+       },
+      "parameters" : [
+        {
+          "name" : "ignite_home",
+          "label" : "Ignite Home",
+          "description" : "Path to IGNITE_HOME",
+          "type" : "string",
+          "default" : "/bigf/admin/ignite/ignite/"
+        },
+        {
+          "name" : "ignite_config",
+          "label" : "Ignite Config File",
+          "description" : "Path to Ignite Config File, example /bigf/admin/ignite/ignite/config/default-config.xml",
+          "type" : "path",
+          "pathType" : "serviceSpecific",
+          "mode" : "0755",
+          "default" : "/bigf/admin/ignite/ignite/config/default-config.xml"
+        },
+        {
+          "name" : "ignite_jvm_opts",
+          "label" : "Ignite JVM Options",
+          "description" : "JVM Options for Ignite",
+          "type" : "string",
+          "default" : "-Xms2g -Xmx2g -server -XX:+AlwaysPreTouch -XX:+ScavengeBeforeFullGC -XX:+AggressiveOpts -XX:+DisableExplicitGC -XX:+UseG1GC"
+        },
+        {
+          "name" : "ignite_jmx_port",
+          "label" : "Ignite JVM Port",
+          "description" : "JMX Port for ignite",
+          "type" : "port",
+          "default" : 49112
+        }
+      ],
+      "configWriter" : {
+         "generators" : [
+           {
+             "filename" : "params.properties",
+             "configFormat" : "properties"
+           }
+         ]
+       }
+    }
+  ],
+  "gateway" : {
+    "alternatives" : {
+      "name" : "echo-conf",
+      "priority" : 50,
+      "linkRoot" : "/etc/echo"
+    },
+    "scriptRunner" : {
+      "program" : "scripts/cc.sh",
+      "args" : [
+        "arg1",
+        "arg2"
+      ],
+      "environmentVariables" : {
+        "ENV1" : "Hello there people",
+        "ENV2" : "Hi"
+      }
+    },
+    "parameters" : [
+      {
+        "name" : "client_var1",
+        "label" : "Client Var1 Label",
+        "description" : "Client Var1 Description",
+        "configName" : "client.var1.config",
+        "type" : "string"
+      },
+      {
+        "name" : "client_var2",
+        "label" : "Client Var2 Label",
+        "description" : "Client Var2 Description",
+        "required" : "true",
+        "type" : "long",
+        "configName" : "client.var2.config",
+        "default" : 1
+      }
+    ],
+    "configWriter" : {
+      "generators" : [
+        {
+          "filename" : "echo-conf/echo_client.xml",
+          "configFormat" : "hadoop_xml",
+          "excludedParams" : ["client_var2"]
+        },
+        {
+          "filename" : "echo-conf/echo_client.properties",
+          "configFormat" : "properties",
+          "includedParams" : ["service_var2", "client_var1", "client_var2"]
+        },
+        {
+          "filename" : "echo-conf/all_params.properties",
+          "configFormat" : "properties"
+        }
+      ]
+    }
+  }
+}

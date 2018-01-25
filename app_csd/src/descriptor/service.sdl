@@ -1,0 +1,232 @@
+{
+  "name": "APP",
+  "label": "APP",
+  "description": "The app service",
+  "version": "5.12.0",
+  "runAs": {
+    "user": "bigf_admin",
+    "group": "bigf_admin"
+  },
+  "compatibility": {
+    "generation": 1
+  },
+  "icon": "images/app.png",
+  "serviceDependencies": [
+    {
+      "name": "ZOOKEEPER",
+      "required": "true"
+    },
+    {
+      "name": "FLINK",
+      "required": "true"
+    }
+  ],
+  "stopRunner": {
+    "relevantRoleTypes": [],
+    "runner": {
+      "program": "scripts/stopAll.sh",
+      "args": []
+    },
+    "timeout": 180000,
+    "masterRole": "00_COMPUTE"
+  },
+  "commands": [
+    {
+      "name": "Stop_00_Compute",
+      "label": "Stop_00_Compute",
+      "description": "Stop00",
+      "roleName": "00_COMPUTE",
+      "roleCommand": "stop_00_compute",
+      "runMode": "single"
+    },
+    {
+      "name": "Stop_01_FBX_Transaction",
+      "label": "Stop_01_FBX_Transaction",
+      "description": "Stop_01_FBX_Transaction",
+      "roleName": "01_FBXTRANSACTION",
+      "roleCommand": "stop_01_fbx_transaction",
+      "runMode": "single"
+    },
+    {
+      "name": "Stop_03_Record_Preprocessing",
+      "label": "Stop_03_Record_Preprocessing",
+      "description": "Stop03",
+      "roleName": "03_RECORD_PREPROCESSING",
+      "roleCommand": "stop_03",
+      "runMode": "single"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "java_home",
+      "label": "Java Home",
+      "description": "Java Home",
+      "required": "true",
+      "type": "string",
+      "default": "/usr/java/latest"
+    },
+    {
+      "name": "ignite_home",
+      "label": "Ignite Home",
+      "description": "Path to IGNITE_HOME",
+      "type": "string",
+      "default": "/bigf/admin/ignite/ignite/"
+    },
+    {
+      "name": "flink_config",
+      "label": "Flink Conig File",
+      "description": "Flink Config File",
+      "required": "true",
+      "type": "string",
+      "default": "/bigf/admin/flink/flink/conf/flink-conf.yaml"
+    },
+    {
+      "name": "flink_home",
+      "label": "Flink Home",
+      "description": "Flink Home",
+      "required": "true",
+      "type": "string",
+      "default": "/bigf/admin/flink/flink"
+    },
+    {
+      "name": "app_home",
+      "label": "App Home",
+      "description": "App Home",
+      "required": "true",
+      "type": "string",
+      "default": "/bigf/admin/application"
+    },
+    {
+      "name": "app_name",
+      "label": "App Name",
+      "description": "App Name",
+      "required": "true",
+      "type": "string",
+      "default": "spdbStreaming-1.1"
+    }
+  ],
+  "roles": [
+    {
+      "name": "00_COMPUTE",
+      "label": "00_COMPUTE",
+      "pluralLabel": "00_COMPUTE",
+      "topology": {
+        "minInstances": 0,
+        "maxInstances": 1
+      },
+      "startRunner": {
+        "program": "scripts/00_submitCompute.sh",
+        "args": [
+          "start"
+        ],
+        "environmentVariables": {
+          "JAVA_HOME": "${java_home}",
+          "IGNITE_HOME": "${ignite_home}",
+          "FLINK_HOME": "${flink_home}",
+          "FLINK_CONFIG": "${flink_config}",
+          "APP_HOME": "${app_home}",
+          "APP_NAME": "${app_name}"
+        }
+      },
+      "commands": [
+        {
+          "name": "stop_00_compute",
+          "label": "stop_00_compute",
+          "description": "stop_00_compute",
+          "expectedExitCodes": [
+            0
+          ],
+          "requiredRoleState": "running",
+          "commandRunner": {
+            "program": "scripts/killApp.sh",
+            "args": [
+              "StatRuleCompute"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01_FBXTRANSACTION",
+      "label": "01_FBXTRANSACTION",
+      "pluralLabel": "01_FBXTRANSACTION",
+      "topology": {
+        "minInstances": 0,
+        "maxInstances": 1
+      },
+      "startRunner": {
+        "program": "scripts/01_submitFBXTransaction.sh",
+        "environmentVariables": {
+          "JAVA_HOME": "${java_home}",
+          "IGNITE_HOME": "${ignite_home}",
+          "FLINK_HOME": "${flink_home}",
+          "FLINK_CONFIG": "${flink_config}",
+          "APP_HOME": "${app_home}",
+          "APP_NAME": "${app_name}"
+        }
+      },
+      "placementRules": {
+        "type": "alwaysWith",
+        "roleType": "00_COMPUTE"
+      },
+      "commands": [
+        {
+          "name": "stop_01_fbx_transaction",
+          "label": "stop_01_fbx_transaction",
+          "description": "stop_01_fbx_transaction",
+          "expectedExitCodes": [
+            0
+          ],
+          "requiredRoleState": "running",
+          "commandRunner": {
+            "program": "scripts/killApp.sh",
+            "args": [
+              "FBXSceneAdapter"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03_RECORD_PREPROCESSING",
+      "label": "03_RECORD_PREPROCESSING",
+      "pluralLabel": "03_RECORD_PREPROCESSING",
+      "topology": {
+        "minInstances": 0,
+        "maxInstances": 1
+      },
+      "startRunner": {
+        "program": "scripts/03_submitRecord.sh",
+        "environmentVariables": {
+          "JAVA_HOME": "${java_home}",
+          "IGNITE_HOME": "${ignite_home}",
+          "FLINK_HOME": "${flink_home}",
+          "FLINK_CONFIG": "${flink_config}",
+          "APP_HOME": "${app_home}",
+          "APP_NAME": "${app_name}"
+        }
+      },
+      "placementRules": {
+        "type": "alwaysWith",
+        "roleType": "00_COMPUTE"
+      },
+      "commands": [
+        {
+          "name": "stop_03",
+          "label": "stop_03",
+          "description": "stop_03",
+          "expectedExitCodes": [
+            0
+          ],
+          "requiredRoleState": "running",
+          "commandRunner": {
+            "program": "scripts/killApp.sh",
+            "args": [
+              "RecordPreprocessing"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

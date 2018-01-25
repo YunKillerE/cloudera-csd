@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.cloudera.csd</groupId>
+    <artifactId>csd-parent</artifactId>
+    <version>0.1</version>
+    <modules>
+        <module>eft_csd</module>
+        <module>flink_csd</module>
+        <module>ignite_csd</module>
+        <module>schedule_csd</module>
+        <module>tomcat_csd</module>
+        <module>app_csd</module>
+        <module>dist</module>
+    </modules>
+
+    <packaging>pom</packaging>
+
+<build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/bin.xml</descriptor>
+                    </descriptors>
+                </configuration>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+
+</build>
+
+</project>

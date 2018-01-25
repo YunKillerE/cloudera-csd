@@ -1,0 +1,62 @@
+{
+  "name" : "EFT",
+  "label" : "EFT",
+  "description" : "The EFT service",
+  "version" : "5.12.0",
+  "runAs" : {
+    "user" : "bigf_app",
+    "group" : "bigf_user"
+   },
+   "compatibility" : {
+     "generation" : 1
+   },
+  "icon" : "images/eft.png",
+  "serviceDependencies" : [
+    {"name" : "ZOOKEEPER", "required" : "true" },
+    {"name" : "HDFS", "required" : "true"}
+  ],
+  "roles" : [
+    {
+       "name" : "EFT_NODE",
+       "label" : "EFT Server",
+       "pluralLabel" : "EFT Servers",
+       "jvmBased": true,
+      "topology" : { "minInstances" : 1, "maxInstances" : 5, "softMinInstances" : 2, "softMaxInstances" : 3},
+       "parameters" : [{
+            "name" : "eft_home",
+            "label" : "eft Home",
+            "description" : "eft Home",
+            "required" : "true",
+            "type" : "string",
+            "default" : "/bigf/app/eftjava-hdfs-1.6.2"
+       }],
+       "startRunner" : {
+         "program" : "scripts/control.sh",
+         "args" : [
+            "start"
+         ],
+         "environmentVariables" : {
+           "HOST": "${host}",
+           "EFT_HOME" : "${eft_home}"
+         }
+       },
+       "stopRunner": {
+         "timeout": "30000"
+       }
+       }
+      ],
+      "rollingRestart": {
+        "nonWorkerSteps": [
+          {
+            "roleName": "OUTBOX_NODE",
+            "bringUpCommands": [ "Start" ],
+            "bringDownCommands": [ "Stop" ]
+          },
+          {
+            "roleName": "PORTAL_NODE",
+            "bringUpCommands": [ "Start" ],
+            "bringDownCommands": [ "Stop" ]
+          }
+        ]
+      }
+}
